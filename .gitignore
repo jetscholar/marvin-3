@@ -1,0 +1,17 @@
+# Python / tooling
+venv/
+.venv/
+env/
+.env/
+__pycache__/
+*.pyc
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# VSCode
+.vscode/
+
+env.h
