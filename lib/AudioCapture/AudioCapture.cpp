@@ -2,7 +2,7 @@
 #include <driver/i2s.h>
 #include <Arduino.h>
 #include <algorithm>
-#include <esp_task_wdt.h> // Added for esp_task_wdt_reset
+#include <esp_task_wdt.h>
 #include "env.h"
 
 AudioCapture::AudioCapture() : is_initialized(false) {}
@@ -23,7 +23,7 @@ bool AudioCapture::init() {
         .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
         .sample_rate = SAMPLE_RATE,
         .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT, // Mono, left channel (INMP441 L/R=GND)
+        .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
         .communication_format = I2S_COMM_FORMAT_STAND_I2S,
         .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
         .dma_buf_count = 8,
@@ -85,6 +85,19 @@ bool AudioCapture::read(int16_t* buffer, size_t samples) {
         Serial.printf("⚠️ Incomplete I2S read: %u/%u bytes\n", bytes_read, bytes_to_read);
         return false;
     }
+
+    // Dynamic gain adjustment
+    int max_amplitude = 0;
+    for (size_t i = 0; i < samples; i++) {
+        max_amplitude = max(max_amplitude, abs(buffer[i]));
+    }
+    float gain = (max_amplitude < 1000) ? 32.0f : (max_amplitude < 5000) ? 16.0f : 8.0f;
+    for (size_t i = 0; i < samples; i++) {
+        buffer[i] = (int16_t)(buffer[i] * gain);
+        if (buffer[i] > 32767) buffer[i] = 32767;
+        if (buffer[i] < -32768) buffer[i] = -32768;
+    }
+    Serial.printf("Applied gain: %.1f\n", gain);
 
     Serial.printf("I2S read %u bytes\n", bytes_read);
     #if DEBUG_LEVEL >= 3

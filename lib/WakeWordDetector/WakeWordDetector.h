@@ -1,10 +1,9 @@
 #ifndef WAKEWORDDETECTOR_H
 #define WAKEWORDDETECTOR_H
-
 #include "AudioCapture.h"
 #include "AudioProcessor.h"
 #include "ManualDSCNN.h"
-#include "env.h" // Includes MAX_AUDIO_BUFFER_SIZE, DETECTION_COOLDOWN_MS, etc.
+#include "env.h"
 
 class WakeWordDetector {
 public:
@@ -17,6 +16,8 @@ public:
     int getDetectionCount() const;
     void resetDetectionCount();
     bool isInitialized() const;
+    AudioProcessor* getAudioProcessor() const { return audio_processor; }
+    int16_t* getAudioBuffer() { return audio_buffer; }
 
 private:
     AudioCapture* audio_capture;
@@ -26,7 +27,6 @@ private:
     int detection_count;
     unsigned long last_detection_time;
     float confidence_threshold;
-    
     void cleanup();
 };
 
