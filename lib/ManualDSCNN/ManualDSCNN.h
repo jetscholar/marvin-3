@@ -1,26 +1,48 @@
-#ifndef MANUALDSCNN_H
-#define MANUALDSCNN_H
+#ifndef MANUAL_DSCNN_H
+#define MANUAL_DSCNN_H
 
-#include <cstdint>
-#include "frontend_params.h"
-#include "model_weights.h"
+#include <stdint.h>
+#include <cstddef>
+
+// Model constants
+#define INPUT_HEIGHT 49
+#define INPUT_WIDTH 10
+#define NUM_CLASSES 12
 
 class ManualDSCNN {
-public:
-    ManualDSCNN();
-    void infer(const int8_t* input, float* output);
-
 private:
-    void conv2D(const int8_t* input, const int8_t* weights, const int32_t* bias,
-                int8_t* output, int in_h, int in_w, int in_channels, int out_channels,
-                int kernel_h, int kernel_w, int stride_h, int stride_w);
-    void depthwiseConv2D(const int8_t* input, const int8_t* weights, const int32_t* bias,
-                        int8_t* output, int in_h, int in_w, int channels,
-                        int kernel_h, int kernel_w, int stride_h, int stride_w);
-    void globalAvgPool2D(const int8_t* input, int8_t* output, int in_h, int in_w, int channels);
-    void dense(const int8_t* input, const int8_t* weights, const int32_t* bias,
-                float* output, int in_size, int out_size);
-    void softmax(float* input, float* output, int size);
+    // Memory buffers
+    uint8_t* arena_buffer;
+    int8_t* input_buffer;
+    int8_t* intermediate_buffer;
+    float* output_buffer;
+    
+    // Arena size
+    size_t arena_size;
+    
+    // Model parameters
+    static const char* class_names[NUM_CLASSES];
+    
+public:
+    // Constructor and destructor
+    ManualDSCNN();
+    ~ManualDSCNN();
+    
+    // Initialization
+    bool init(size_t arena_size);
+    
+    // Main inference method
+    void infer(const int8_t* input, float* output);
+    
+    // Utility methods
+    int getPredictedClass(const float* predictions);
+    float getConfidence(const float* predictions, int class_idx);
+    const char* getClassName(int class_idx);
+    size_t getArenaSize() const;
+    
+    // Memory management
+    void cleanup();
+    bool isInitialized() const { return arena_buffer != nullptr; }
 };
 
-#endif
+#endif // MANUAL_DSCNN_H
